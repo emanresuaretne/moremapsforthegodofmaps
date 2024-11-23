@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>БашАтлас</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+	<script>
+        var villages_dict = {{ villages_dict|tojson }};
+        var features_dict = {{ features_dict|tojson }};
+        var values = {{ values|tojson }};
+    </script>
+    <div id="map"></div>
+	<div>
+		<button class="unselect-button" onclick="show_all()">Сброс</button>
+    </div>
+	<div class="button-container">
+		{% for i, feature_dict in features_dict.items() %}
+			<div class="button-group">
+				<div>
+					<span class="group-title" id="map_{{i}}" onclick="map_show(this.id)">{{ i }}) {{ feature_dict["name"] }}</span>
+					<button class="spoiler-button" onclick="toggleGroup(this)">▼</button>
+				</div>
+				<div class="button-group-buttons">
+					{% for feature in feature_dict["features"] %}
+						<button class="feature-button" id="feature_{{ feature['id'] }}" onclick="feature_show(this.id)">{{ feature['property'] }}</button>
+					{% endfor %}
+				</div>
+			</div>
+		{% endfor %}
+    </div>
+	<div class="legend" id="legend">
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
