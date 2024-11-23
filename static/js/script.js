@@ -31,6 +31,12 @@ function hslToHex(h, s, l) {
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+function hexToRgb(hex) {
+    const match = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+    if (!match) return null;
+    return `rgb(${parseInt(match[1], 16)}, ${parseInt(match[2], 16)}, ${parseInt(match[3], 16)})`;
+}
+
 function generateColorPalette(count) {
     const colors = [];
     const step = 360 / count;
@@ -133,8 +139,16 @@ function appendLegend(color, textstring) {
 	legend.appendChild(legend_item);
 };
 
+function buildLegend(features_id, first_id, palette) {
+	var legend = document.getElementById("legend");
+	for (const f of features_id) {
+		appendLegend(palette[f - first_id], document.getElementById("feature_" + f).innerText);
+	}
+	legend.style.display = "block";
+};
+
 function map_show(map_id) {
-	clear_all();
+	clear_all(true);
 	
 	var id = parseInt(map_id.split('_')[1]);
 	var features = features_dict[id].features
@@ -144,13 +158,55 @@ function map_show(map_id) {
 	};
 	
 	var palette = generateColorPalette(features_id.length);
+	var first_id = features_id[0]
 	
-	var legend = document.getElementById("legend");
-	for (const f in features_id) {
-		appendLegend(palette[f], document.getElementById("feature_" + features_id[f]).innerText);
+	show_few(features_id, first_id, palette);
+};
+
+function feature_show(feature_id) {
+	var this_button = document.getElementById(feature_id);
+	
+	var features_id = [];
+	
+	var id = parseInt(feature_id.split('_')[1]);
+	
+	var sisters = this_button.parentElement.children;
+	var first_sister = sisters[0]
+	var first_id = parseInt(first_sister.id.split('_')[1]);
+	var position = id - first_id;
+	
+	for (const sister of sisters) {
+		var sister_color = window.getComputedStyle(sister).backgroundColor
+		if (sister_color === hexToRgb("#1463b8")) {
+			var sister_id = parseInt(sister.id.split('_')[1]);
+			features_id.push(sister_id);
+		}
 	}
-	legend.style.display = "block";
+	features_id = [...new Set(features_id)]
+	const bool = (features_id.length > 0)
 	
+	clear_all(!bool);
+	
+	var this_color = this_button.style.backgroundColor;
+	if (this_color === hexToRgb("#007bff")) {
+		this_button.style.backgroundColor = "#1463b8";
+		features_id.push(id);
+	} else {
+		this_button.style.backgroundColor = "#007bff";
+		features_id = features_id.filter(item => item !== id);
+	}
+	
+	features_id = features_id.sort((a, b) => a - b)
+	
+	if (features_id.length) {
+		var palette = generateColorPalette(sisters.length);
+		show_few(features_id, first_id, palette);
+	} else {
+		show_all()
+	};
+};
+
+function show_few(features_id, first_id, palette) {
 	var range = [...Array(villages_numbers.length).keys()];
 	for (const r of range) {
 		var village_features = [];
@@ -163,41 +219,13 @@ function map_show(map_id) {
 		var village_info = villages_dict[r + 1];
 		var sectors = [];
 		for (const vf of village_features) {
-			var sector = { color: palette[vf - features_id[0]], angle: 360 / village_features.length, opacity: 0.5 };
+			var sector = { color: palette[vf - first_id], angle: 360 / village_features.length, opacity: 0.5 };
 			sectors.push(sector);
 		};
 		createMarker(village_info.coords, sectors, r + 1, village_info.name, village_info.district);
 	};
-};
-
-function feature_show(feature_id) {
-	clear_all();
 	
-	var this_button = document.getElementById(feature_id);
-	this_button.style.backgroundColor = "#1463b8";
-	
-	var id = parseInt(feature_id.split('_')[1]);
-	var values_id = values[id];
-	
-	var sisters = this_button.parentElement.children;
-	var first_sister = sisters[0]
-	var first_sister_id = parseInt(first_sister.id.split('_')[1]);
-	var position = id - first_sister_id;
-	
-	var palette = generateColorPalette(sisters.length);
-	
-	var range = [...Array(villages_numbers.length).keys()];
-	for (const r of range) {
-		if (values_id[r]) {
-			var village_info = villages_dict[r + 1];
-			var sectors = [{ color: palette[position], angle: 360 , opacity: 0.5 }];
-			createMarker(village_info.coords, sectors, r + 1, village_info.name, village_info.district);
-		};
-	};
-	
-	var legend = document.getElementById("legend");
-	appendLegend(palette[position], this_button.innerText);
-	legend.style.display = "block";
+	buildLegend(features_id, first_id, palette);
 };
 
 function show_all() {
@@ -206,7 +234,7 @@ function show_all() {
 		b.style.backgroundColor = "#007bff";
 	});
 
-	clear_all();
+	clear_all(true);
 	
 	Object.keys(villages_dict).forEach(function(v) {
 		var village_info = villages_dict[v];
@@ -215,11 +243,13 @@ function show_all() {
 	});
 };
 
-function clear_all() {
-	const buttons = document.querySelectorAll(".feature-button");
-	buttons.forEach(b => {
-		b.style.backgroundColor = "#007bff";
-	});
+function clear_all(strict) {
+	if (strict) {
+		const buttons = document.querySelectorAll(".feature-button");
+		buttons.forEach(b => {
+			b.style.backgroundColor = "#007bff";
+		});
+	}
 	
 	var legend = document.getElementById("legend");
 	legend.style.display = "none";
