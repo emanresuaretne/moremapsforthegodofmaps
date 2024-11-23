@@ -114,8 +114,24 @@ function createSectorIcon(size, sectors, borderColor, borderWidth) {
 };
 
 function createMarker(coords, sectors, n, name, district) {
+	if (sectors.length) {
+		console.log(1);
+		var icon = createSectorIcon(16, sectors, 'black', 10)
+	} else {
+		var icon = L.divIcon({
+			className: '',
+			html: `
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+					<circle cx="10" cy="10" r="5" fill="black" />
+				</svg>
+			`,
+			iconSize: [20, 20],
+			iconAnchor: [10, 10]
+		});
+	};
+	
 	var sectorMarker = L.marker(coords, {
-		icon: createSectorIcon(16, sectors, 'black', 10)
+		icon: icon
 	}).addTo(map).bindPopup(n + ") " + name + "<br>" + district + " р.");
 };
 
@@ -238,7 +254,7 @@ function show_all() {
 	
 	Object.keys(villages_dict).forEach(function(v) {
 		var village_info = villages_dict[v];
-		var sectors = [{ color: "white", angle: 360 , opacity: 0.5 }];
+		var sectors = [];
 		createMarker(village_info.coords, sectors, v, village_info.name, village_info.district);
 	});
 };
