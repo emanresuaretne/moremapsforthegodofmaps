@@ -3,35 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>БашАтлас</title>
+    <title>{{ title }}</title>
+	<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-	<script>
-        var villages_dict = {{ villages_dict|tojson }};
-        var features_dict = {{ features_dict|tojson }};
-        var values = {{ values|tojson }};
-    </script>
     <div id="map"></div>
 	<div>
-		<button class="unselect-button" onclick="show_all()">Сброс</button>
+		<button class="unselect-button" onclick="clear_all(true), show([])">Сброс</button>
+		<button class="info-link" onclick="window.location.href='/info'">О базе данных</button>
     </div>
+	<div>
+		<input class="search_input" type="text" id="search_input" placeholder="Введите запрос" value="" onkeydown="if(event.key === 'Enter') event.preventDefault()" oninput=searchFunction(this.value)>
+	</div>
+	{% set ns = namespace(prev_length=0) %}
 	<div class="button-container">
-		{% for i, feature_dict in features_dict.items() %}
-			<div class="button-group">
-				<div>
-					<span class="group-title" id="map_{{i}}" onclick="map_show(this.id)">{{ i }}) {{ feature_dict["name"] }}</span>
+		{% for i, domain in enumerate(features_list) %}
+			<div class="domain-group">
+				<div class="group-header">
+					<span class="domain-title" id="domain_{{i}}">{{ domain["domain"] }}</span>
 					<button class="spoiler-button" onclick="toggleGroup(this)">▼</button>
 				</div>
-				<div class="button-group-buttons">
-					{% for feature in feature_dict["features"] %}
-						<button class="feature-button" id="feature_{{ feature['id'] }}" onclick="feature_show(this.id)">{{ feature['property'] }}</button>
+				<div class="button-group hidden">
+					{% for j, map_ in enumerate(domain["maps"], ns.prev_length) %}
+						<div>
+							<div class="group-header">
+								<span class="group-title" id="map_{{j}}" onclick="map_show(this)">{{ map_["number"] }}) {{ map_["name"] }}</span>
+								<button class="spoiler-button" onclick="toggleGroup(this)">▼</button>
+							</div>
+							<div class="button-group-buttons hidden">
+								{% for feature in map_["features"] %}
+									<button class="feature-button" id="feature_{{ feature[0] }}" onclick="feature_show(this)">{{ feature[1] }}</button>
+								{% endfor %}
+							</div>
+						</div>
 					{% endfor %}
 				</div>
 			</div>
+			{% set ns.prev_length = ns.prev_length + domain["maps"]|length %}
 		{% endfor %}
+    </div>
+	<div>
+		<input class="village_search_input" type="text" id="village_search_input" placeholder="Введите название деревни" value="" onkeydown="if(event.key === 'Enter') event.preventDefault()">
+		<ul id="suggestionsList" class="suggestions-list"></ul>
     </div>
 	<div class="legend" id="legend">
     </div>
