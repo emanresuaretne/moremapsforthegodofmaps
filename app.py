@@ -18,14 +18,8 @@ with open('villages_list.pkl', 'rb') as f:
 with open('features_list.pkl', 'rb') as f:
     features_list = pickle.load(f)
 
-polygons = []
-with open("ru.json") as file:
-    ru = json.load(file)
-    for feature in ru['features']:
-        if feature['properties']['id'] in ["RUBA"]:
-            polygon = np.array(feature['geometry']['coordinates'][0])
-            polygon = polygon[:, ::-1]
-            polygons.append(polygon.tolist())
+with open('geoboundaries.pkl', 'rb') as f:
+    boundaries = pickle.load(f)
 
 app = Flask(__name__)
 
@@ -52,7 +46,7 @@ def get_colors():
 
 @app.route('/get_polygons', methods=['GET'])
 def get_polygons():
-    return jsonify(polygons)
+    return jsonify(boundaries)
 
 @app.route('/get_values', methods=['POST'])
 def get_values():

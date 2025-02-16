@@ -406,13 +406,17 @@ async function main() {
 	const polygons_response = await fetch('/get_polygons');
 	polygons = await polygons_response.json();
 	
-	for (const polygon of polygons) {
-		L.polygon(polygon, {
-			color: 'black',
-			fillOpacity: 0,
-			weight: 1
-		}).addTo(map);
-	};
+	L.polygon(polygons[1], {
+		color: '#666666',
+		fillOpacity: 0,
+		weight: 0.5
+	}).addTo(map);
+	
+	L.polygon(polygons[0], {
+		color: 'black',
+		fillOpacity: 0,
+		weight: 1
+	}).addTo(map);
 	
 	buttons = document.querySelectorAll(".feature-button");
 	for (const button_ of buttons) {
